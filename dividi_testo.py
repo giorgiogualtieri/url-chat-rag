@@ -5,18 +5,27 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from carica_url import carica_url
 
 
-def dividi_documenti(documenti, dimensione_chunk=1000, sovrapposizione=150):
-    """Pulisce il testo e lo taglia in chunk (pezzi)."""
-    # Le pagine web hanno spesso tante righe vuote di seguito:
-    # le riduciamo a una sola riga vuota.
+def dividi_documenti(documenti, dimensione_chunk=1000, sovrapposizione=150, lunghezza_minima=100):
+    """Pulisce il testo, lo taglia in chunk e scarta i pezzi troppo corti."""
     for doc in documenti:
-        doc.page_content = re.sub(r"\n\s*\n+", "\n\n", doc.page_content)
+        testo = doc.page_content
+
+        # Wikipedia: togliamo le righe che rimandano ad altre pagine
+        testo = re.sub(r"(?m)^Lo stesso argomento in dettaglio:.*$", "", testo)
+
+        # Riduciamo le righe vuote di seguito a una sola riga vuota
+        testo = re.sub(r"\n\s*\n+", "\n\n", testo)
+
+        doc.page_content = testo
 
     divisore = RecursiveCharacterTextSplitter(
         chunk_size=dimensione_chunk,
         chunk_overlap=sovrapposizione,
     )
-    return divisore.split_documents(documenti)
+    chunk = divisore.split_documents(documenti)
+
+    # Scartiamo i pezzi troppo corti: di solito sono rumore (menu, rimandi, titoli)
+    return [pezzo for pezzo in chunk if len(pezzo.page_content.strip()) >= lunghezza_minima]
 
 
 if __name__ == "__main__":

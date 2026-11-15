@@ -47,10 +47,10 @@ def apri_database_esistente():
 
 def rispondi(domanda, database):
     """Cerca i pezzi giusti e fa scrivere la risposta al modello."""
-    # 1. CERCA: 4 pezzi scelti con MMR tra 12 candidati
+        # La ricerca semplice ha dato risultati migliori dell'MMR nei nostri test
     cercatore = database.as_retriever(
-        search_type="mmr",
-        search_kwargs={"k": 4, "fetch_k": 12},
+        search_type="similarity",
+        search_kwargs={"k": 4},
     )
     trovati = cercatore.invoke(domanda)
 
