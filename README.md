@@ -20,7 +20,7 @@ Chat con una pagina web: incolli un indirizzo (URL), il programma legge la pagin
 ## Installazione
 
 ```bash
-git clone https://github.com/TUO-USERNAME/url-chat-rag.git
+git clone https://github.com/giorgiogualtieri/url-chat-rag.git
 cd url-chat-rag
 python3.12 -m venv .venv
 source .venv/bin/activate
