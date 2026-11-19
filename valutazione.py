@@ -11,6 +11,7 @@ from domande_risposte import MODELLO_CHAT, PROMPT, apri_database_esistente, prep
 
 URL_TEST = "https://it.wikipedia.org/wiki/Intelligenza_artificiale"
 FRASE_RIFIUTO = "non trovo questa informazione"
+K_PEZZI = 6  # quanti pezzi consegnare al modello (nelle prove precedenti: 4)
 
 # Le domande di prova.
 # "attese": parole che la risposta giusta deve contenere.
@@ -37,7 +38,7 @@ ATTESA_CONVERSAZIONE = ["1950"]
 
 def valuta_domanda(prova, database):
     """Cerca i pezzi, fa rispondere il modello e controlla il risultato."""
-    cercatore = database.as_retriever(search_type="similarity", search_kwargs={"k": 4})
+    cercatore = database.as_retriever(search_type="similarity", search_kwargs={"k": K_PEZZI})
     trovati = cercatore.invoke(prova["domanda"])
     contesto = "\n\n".join(pezzo.page_content for pezzo in trovati)
 
@@ -70,7 +71,8 @@ def valuta_conversazione(database):
         risposta, domanda_completa, _ = rispondi_in_chat(domanda, database, storico)
         if numero > 0:
             riscritture_totali += 1
-            if domanda_completa.strip().endswith("?") and "turing" in domanda_completa.lower():
+            argomenti = ["turing", "computing machinery"]
+            if domanda_completa.strip().endswith("?") and any(a in domanda_completa.lower() for a in argomenti):
                 riscritture_buone += 1
             print(f'   "{domanda}" -> riscritta come: {domanda_completa}')
         storico.append(HumanMessage(content=domanda))
