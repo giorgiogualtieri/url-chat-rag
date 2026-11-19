@@ -16,15 +16,25 @@ PROMPT_RIFORMULA = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "Ti viene data una conversazione e una nuova domanda dell'utente. "
-            "Riscrivi la nuova domanda in modo che si capisca da sola, senza bisogno "
-            "della conversazione: sostituisci pronomi e riferimenti come 'lui', 'quello', "
-            "'allora' con i nomi precisi. NON rispondere alla domanda. "
-            "Se la domanda si capisce gia da sola, riscrivila identica. "
-            "Scrivi solo la domanda riscritta, nient'altro.",
+            "Il tuo unico compito e riscrivere l'ultima domanda dell'utente in modo che si capisca da sola, "
+            "usando la conversazione per sostituire riferimenti come 'lo', 'quello', 'allora' "
+            "o domande troncate come 'In che anno?'. "
+            "NON rispondere alla domanda. Scrivi SOLO una domanda, che finisce con un punto interrogativo.\n\n"
+            "Esempio 1\n"
+            "Domanda precedente: Che cos'e il test di Turing?\n"
+            "Ultima domanda: Chi lo ha inventato?\n"
+            "Domanda riscritta: Chi ha inventato il test di Turing?\n\n"
+            "Esempio 2\n"
+            "Domanda precedente: Quando si e tenuta la conferenza di Dartmouth?\n"
+            "Ultima domanda: E dove?\n"
+            "Domanda riscritta: Dove si e tenuta la conferenza di Dartmouth?\n\n"
+            "Esempio 3\n"
+            "Domanda precedente: Chi erano McCulloch e Pitts?\n"
+            "Ultima domanda: Che cos'e l'apprendimento automatico?\n"
+            "Domanda riscritta: Che cos'e l'apprendimento automatico?",
         ),
         MessagesPlaceholder("storico"),
-        ("human", "{domanda}"),
+        ("human", "Ultima domanda: {domanda}\nDomanda riscritta:"),
     ]
 )
 
@@ -59,7 +69,14 @@ def rispondi_in_chat(domanda, database, storico):
         riscrittura = PROMPT_RIFORMULA | modello | StrOutputParser()
         domanda_completa = riscrittura.invoke(
             {"storico": ultimi_messaggi, "domanda": domanda}
-        ).strip()
+        ).replace("Domanda riscritta:", "").strip()
+
+        # Rete di sicurezza: una domanda vera finisce con "?" ed e breve.
+        # Se il modello ha risposto invece di riscrivere, usiamo il piano B:
+        # l'ultima domanda dell'utente seguita da quella nuova.
+        if not domanda_completa.endswith("?") or len(domanda_completa) > 200:
+            ultima_domanda_utente = ultimi_messaggi[-2].content
+            domanda_completa = f"{ultima_domanda_utente} {domanda}"
     else:
         domanda_completa = domanda
 
