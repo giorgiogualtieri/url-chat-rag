@@ -11,7 +11,7 @@ from domande_risposte import MODELLO_CHAT, PROMPT, apri_database_esistente, prep
 
 URL_TEST = "https://it.wikipedia.org/wiki/Intelligenza_artificiale"
 FRASE_RIFIUTO = "non trovo questa informazione"
-K_PEZZI = 6  # quanti pezzi consegnare al modello (nelle prove precedenti: 4)
+K_PEZZI = 4  # quanti pezzi consegnare al modello
 
 # Le domande di prova.
 # "attese": parole che la risposta giusta deve contenere.
