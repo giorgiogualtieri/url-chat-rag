@@ -8,9 +8,16 @@ from carica_url import carica_url
 from chat import rispondi_in_chat
 from crea_database import crea_embedding
 from dividi_testo import dividi_documenti
+from stile import applica_stile
 
-st.set_page_config(page_title="URL Chat RAG", page_icon="💬")
-st.title("Chat con una pagina web")
+# Il nome del progetto compare nella scheda del browser
+st.set_page_config(page_title="LinkTelex")
+applica_stile()
+
+st.markdown(
+    '<div class="testata"><h1>LinkTelex</h1><p>Parla con una pagina web</p></div>',
+    unsafe_allow_html=True,
+)
 
 # L'"armadietto" dell'app: ciò che deve restare tra un click e l'altro
 if "database" not in st.session_state:
@@ -19,12 +26,23 @@ if "database" not in st.session_state:
     st.session_state.storico = []      # la memoria per il modello
     st.session_state.messaggi = []     # i messaggi mostrati a schermo
 
+
+def mostra_messaggio(ruolo, testo, dettagli=None):
+    """Disegna un messaggio con la sua etichetta (Tu / LinkTelex)."""
+    nome = "Tu" if ruolo == "user" else "LinkTelex"
+    with st.chat_message(ruolo):
+        st.markdown(f'<span class="etichetta">{nome}</span>', unsafe_allow_html=True)
+        st.write(testo)
+        if dettagli:
+            st.caption(dettagli)
+
+
 # ---------- BARRA LATERALE: caricamento della pagina ----------
 with st.sidebar:
-    st.header("1. Carica una pagina")
+    st.header("1. Inserisci il link")
     url = st.text_input("Indirizzo (URL)", placeholder="https://...")
 
-    if st.button("Carica e analizza"):
+    if st.button("Carica e analizza", type="primary"):
         if not url.strip():
             st.warning("Scrivi prima un URL.")
         else:
@@ -47,7 +65,7 @@ with st.sidebar:
 
     if st.session_state.database is not None:
         st.caption(f"Pagina attiva: {st.session_state.url}")
-        if st.button("Azzera la conversazione"):
+        if st.button("Azzera la conversazione", type="secondary"):
             st.session_state.storico = []
             st.session_state.messaggi = []
             st.rerun()
@@ -60,18 +78,15 @@ if st.session_state.database is None:
 else:
     # Ridisegniamo la conversazione fatta finora
     for messaggio in st.session_state.messaggi:
-        with st.chat_message(messaggio["ruolo"]):
-            st.write(messaggio["testo"])
-            if "dettagli" in messaggio:
-                st.caption(messaggio["dettagli"])
+        mostra_messaggio(messaggio["ruolo"], messaggio["testo"], messaggio.get("dettagli"))
 
     domanda = st.chat_input("Scrivi una domanda sulla pagina")
 
     if domanda:
-        with st.chat_message("user"):
-            st.write(domanda)
+        mostra_messaggio("user", domanda)
 
         with st.chat_message("assistant"):
+            st.markdown('<span class="etichetta">LinkTelex</span>', unsafe_allow_html=True)
             with st.spinner("Sto pensando..."):
                 risposta, domanda_completa, fonti = rispondi_in_chat(
                     domanda, st.session_state.database, st.session_state.storico
